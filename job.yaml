@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    CineData_Analytics_Pipeline:
+      name: CineData_Analytics_Pipeline
+      schedule:
+        quartz_cron_expression: 4 0 12 * * ?
+        timezone_id: America/Sao_Paulo
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: to_Bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/gabriella@land.ufrj.br/01_bronze
+            source: WORKSPACE
+        - task_key: to_Silver
+          depends_on:
+            - task_key: to_Bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/gabriella@land.ufrj.br/02_silver
+            source: WORKSPACE
+        - task_key: to_Gold
+          depends_on:
+            - task_key: to_Silver
+          notebook_task:
+            notebook_path: /Workspace/Users/gabriella@land.ufrj.br/03_gold
+            source: WORKSPACE
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED

@@ -2,7 +2,7 @@
 
 # CineData Analytics — Arquitetura Medalhão
 
-Projeto desenvolvido para a Atividade 2 de Engenharia de Dados, utilizando uma arquitetura Medalhão (Bronze, Silver e Gold) para processamento e análise de dados de filmes.
+Projeto desenvolvido para as Atividades 2 e 3, utilizando uma arquitetura Medalhão (Bronze, Silver e Gold) para processamento e análise de dados de filmes, com orquestração via Databricks Workflow (Job).
 
 ## Tecnologias
 
@@ -50,6 +50,21 @@ Camada analítica organizada em modelo dimensional, contendo:
 
 A `fact_movies_performance` possui granularidade de um registro por filme.
 
+## Orquestração — Databricks Workflow (Job)
+
+O pipeline foi orquestrado em um Job (`CineData_Analytics_Pipeline`) com três tarefas encadeadas:
+
+| Tarefa      | Notebook    | Dependência         |
+| ----------- | ----------- | ------------------- |
+| `to_Bronze` | `01_bronze` | — (início do fluxo) |
+| `to_Silver` | `02_silver` | `to_Bronze`         |
+| `to_Gold`   | `03_gold`   | `to_Silver`         |
+
+- **Dependências explícitas:** `to_Silver` só inicia após a conclusão de `to_Bronze`; `to_Gold` só inicia após a conclusão de `to_Silver` (configurado via `depends_on`).
+- **Agendamento:** execução diária às **12:00 (horário de Brasília)**, simulando uma rotina real de atualização de dados em produção (`quartz_cron_expression: 4 0 12 * * ?`, `timezone_id: America/Sao_Paulo`).
+- O arquivo `job.yaml` (exportação do Job no Databricks) está na raiz do repositório.
+- A imagem da execução de sucesso, exibindo o grafo de dependências entre as tarefas, está na pasta `Imagens/`.
+
 ## Analytics
 
 Foram desenvolvidas consultas para responder:
@@ -61,9 +76,21 @@ Foram desenvolvidas consultas para responder:
 5. Ator com maior número de participações nos últimos 2 anos
 6. Produtora com maior lucro nos últimos 5 anos
 
+## Estrutura do repositório
+
+```
+├── notebooks/
+│   ├── 01_bronze.ipynb   # Landing → Bronze
+│   ├── 02_silver.ipynb   # Bronze → Silver
+│   └── 03_gold.ipynb     # Silver → Gold + Analytics
+├── Imagens/              # Prints da execução do Job
+├── job.yaml              # Exportação do Databricks Workflow
+└── README.md
+```
+
 ## Observação
 
-Os dados e tabelas utilizados no processamento foram disponibilizados no ambiente Databricks da atividade. O notebook contém todo o processo de ingestão, transformação, modelagem e análise.
+Os dados e tabelas utilizados no processamento foram disponibilizados no ambiente Databricks da atividade. Os notebooks contêm todo o processo de ingestão, transformação, modelagem, orquestração e análise.
 
 ## Principais resultados
 
